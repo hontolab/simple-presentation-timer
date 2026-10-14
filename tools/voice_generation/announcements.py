@@ -2,7 +2,7 @@
 
 管理者はこのファイルを編集して generate_voices.py を再実行するだけで
 音声を再生成・差し替えできる（FR-037）．
-契約: specs/001-simple-presentation-timer/contracts/audio-manifest.md
+契約: specs/002-settings-refinement/contracts/audio-manifest.md（001 契約を置き換え）
 """
 
 # 声色ごとの Google Cloud TTS ボイス設定
@@ -40,21 +40,25 @@ def _duration_label(seconds: int) -> str:
 
 
 def build_announcements() -> dict[str, str]:
-    """アナウンス ID → 文言の対応表（全 9 件）を返す．
+    """アナウンス ID → 文言の対応表（全 10 件）を返す．
 
-    進行: 発表 → 指定討論 → 聴衆討論 →（入れ替え → 次の発表者）… → 完了
-    リマインドは発表フェーズのみ（Clarifications Q3）．
+    進行: 発表 →（指定討論 →）QAセッション →（入れ替え → 次の発表者）… → 完了
+    指定討論「なし」のときは発表終了に presentation_end_no_designated を使う
+    （002 FR-005）．リマインドは発表フェーズのみ（001 Clarifications Q3）．
     """
     announcements = {
-        "start": "進捗報告会を開始します．1 人目の発表を始めてください．",
+        "start": "1 人目の発表を始めてください．",
         "presentation_end": (
             "発表時間が終了しました．指定討論者は質疑を始めてください．"
         ),
+        "presentation_end_no_designated": (
+            "発表時間が終了しました．会場からのQAセッションに移ってください．"
+        ),
         "designated_end": (
-            "指定討論の時間が終了しました．聴衆からの質疑に移ってください．"
+            "指定討論の時間が終了しました．会場からのQAセッションに移ってください．"
         ),
         "audience_end_changeover": (
-            "質疑の時間が終了しました．次の発表者と交代してください．"
+            "QAセッションの時間が終了しました．次の発表者と交代してください．"
         ),
         "changeover_end": "次の発表を始めてください．",
         "complete": "すべての発表が終了しました．お疲れさまでした．",

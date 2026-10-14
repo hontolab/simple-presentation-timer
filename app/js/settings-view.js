@@ -50,6 +50,7 @@ export function createSettingsView({ onSave, onClose }) {
     form: $('settings-form'),
     messages: $('settings-messages'),
     inputSpeakers: $('input-speakers'),
+    remindNote: $('remind-note'),
     closeButton: $('settings-close'),
   };
 
@@ -66,6 +67,14 @@ export function createSettingsView({ onSave, onClose }) {
     option.value = String(n);
     option.textContent = `${n} 名`;
     el.inputSpeakers.appendChild(option);
+  }
+
+  // 声色「なし」のときだけリマインド注記を表示する（002 FR-016）
+  function updateRemindNote() {
+    el.remindNote.hidden = el.form.elements.voice.value !== 'none';
+  }
+  for (const radio of el.form.querySelectorAll('input[name="voice"]')) {
+    radio.addEventListener('change', updateRemindNote);
   }
 
   function clearMessages() {
@@ -119,6 +128,7 @@ export function createSettingsView({ onSave, onClose }) {
       pickers.changeover.set(settings.changeoverSec);
       pickers.remind.set(settings.remindBeforeSec);
       el.form.elements.voice.value = settings.voice;
+      updateRemindNote();
       clearMessages();
       el.view.hidden = false;
     },

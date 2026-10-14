@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-14T10:57:40+09:00",
+  "generatedAt": "2026-10-14T16:09:29+09:00",
   "voices": {
     "female": {
       "name": "ja-JP-Neural2-B"
@@ -11,7 +11,7 @@
   },
   "announcements": {
     "start": {
-      "text": "進捗報告会を開始します．1 人目の発表を始めてください．",
+      "text": "1 人目の発表を始めてください．",
       "files": {
         "female": "female/start.mp3",
         "male": "male/start.mp3"
@@ -24,15 +24,22 @@
         "male": "male/presentation_end.mp3"
       }
     },
+    "presentation_end_no_designated": {
+      "text": "発表時間が終了しました．会場からのQAセッションに移ってください．",
+      "files": {
+        "female": "female/presentation_end_no_designated.mp3",
+        "male": "male/presentation_end_no_designated.mp3"
+      }
+    },
     "designated_end": {
-      "text": "指定討論の時間が終了しました．聴衆からの質疑に移ってください．",
+      "text": "指定討論の時間が終了しました．会場からのQAセッションに移ってください．",
       "files": {
         "female": "female/designated_end.mp3",
         "male": "male/designated_end.mp3"
       }
     },
     "audience_end_changeover": {
-      "text": "質疑の時間が終了しました．次の発表者と交代してください．",
+      "text": "QAセッションの時間が終了しました．次の発表者と交代してください．",
       "files": {
         "female": "female/audience_end_changeover.mp3",
         "male": "male/audience_end_changeover.mp3"

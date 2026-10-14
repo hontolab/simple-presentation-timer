@@ -51,7 +51,7 @@
         <div class="preset-group" id="preset-designated"></div>
       </div>
       <div class="field">
-        <span>聴衆討論時間</span>
+        <span>QAセッション時間</span>
         <div class="preset-group" id="preset-audience"></div>
       </div>
       <div class="field">
@@ -61,11 +61,13 @@
       <div class="field">
         <span>リマインド（発表の残り時間）</span>
         <div class="preset-group" id="preset-remind"></div>
+        <p id="remind-note" class="field-note" hidden>声色が「なし」のため，リマインドは音声で通知されません</p>
       </div>
       <fieldset class="field voice-field">
         <legend>アナウンスの声</legend>
         <label><input type="radio" name="voice" value="female"> 女性</label>
         <label><input type="radio" name="voice" value="male"> 男性</label>
+        <label><input type="radio" name="voice" value="none"> なし</label>
       </fieldset>
       <div id="settings-messages" class="settings-messages" hidden></div>
       <button id="settings-save" class="control-button primary" type="submit">保存する</button>

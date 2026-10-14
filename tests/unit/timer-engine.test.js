@@ -370,3 +370,29 @@ describe('リマインド（FR-016, FR-023, US3）', () => {
     assert.deepEqual(announced, ['start', 'changeover_end']); // 追い再生なし
   });
 });
+
+describe('指定討論なしの進行表（002 US1）でもエンジンは無変更で動く', () => {
+  test('2 名: start → 満了 ×4 → completed，アナウンス ID は専用の発表終了文言を使う', () => {
+    const settings = { ...DEFAULT_SETTINGS, speakers: 2, designatedSec: 0,
+      presentationSec: 10, audienceSec: 10, changeoverSec: 10, remindBeforeSec: 30 };
+    const announced = [];
+    const engine = new TimerEngine(buildSchedule(settings), settings.remindBeforeSec, {
+      onAnnounce: (id) => announced.push(id),
+    });
+    let now = 0;
+    engine.start(now);
+    for (let i = 0; i < 5; i++) {
+      now += 10_000;
+      engine.resync(now);
+    }
+    assert.equal(engine.getSnapshot(now).status, STATUS.COMPLETED);
+    assert.deepEqual(announced, [
+      'start',
+      'presentation_end_no_designated',
+      'audience_end_changeover',
+      'changeover_end',
+      'presentation_end_no_designated',
+      'complete',
+    ]);
+  });
+});

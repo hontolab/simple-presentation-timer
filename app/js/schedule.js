@@ -1,6 +1,8 @@
 // 設定 → セグメント列（進行表）の純粋関数（data-model.md 準拠）
-// 発表者 i ごとに 発表 → 指定討論 → 聴衆討論 を並べ，最終発表者以外の末尾に
-// 入れ替えを挿入する．フェーズ構成は固定で設定対象外（Constitution 原則 III）．
+// 発表者 i ごとに 発表 → 指定討論 → QAセッション を並べ，最終発表者以外の末尾に
+// 入れ替えを挿入する．指定討論「なし」（designatedSec === 0）のときは指定討論を
+// 省いた 発表 → QAセッション の 2 フェーズ構成（Constitution v2 原則 III）．
+// それ以外のフェーズ構成は固定で設定対象外．
 
 /**
  * @typedef {Object} Segment
@@ -13,6 +15,7 @@
 /** @returns {Segment[]} */
 export function buildSchedule(settings) {
   const { speakers, presentationSec, designatedSec, audienceSec, changeoverSec } = settings;
+  const hasDesignated = designatedSec > 0; // 0 =「なし」（002 FR-004）
   const segments = [];
 
   for (let speaker = 1; speaker <= speakers; speaker++) {
@@ -21,13 +24,16 @@ export function buildSchedule(settings) {
     segments.push({
       kind: 'presentation', speaker,
       durationSec: presentationSec,
-      endAnnouncement: 'presentation_end',
+      // 指定討論なしのときは QAセッションへの移行を促す専用文言（002 FR-005/FR-006）
+      endAnnouncement: hasDesignated ? 'presentation_end' : 'presentation_end_no_designated',
     });
-    segments.push({
-      kind: 'designated', speaker,
-      durationSec: designatedSec,
-      endAnnouncement: 'designated_end',
-    });
+    if (hasDesignated) {
+      segments.push({
+        kind: 'designated', speaker,
+        durationSec: designatedSec,
+        endAnnouncement: 'designated_end',
+      });
+    }
     segments.push({
       kind: 'audience', speaker,
       durationSec: audienceSec,

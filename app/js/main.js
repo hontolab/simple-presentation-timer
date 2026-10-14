@@ -16,6 +16,9 @@ const WAKE_LOCK_UNAVAILABLE_MESSAGE =
 let settings = loadSettings(window.localStorage);
 let engine = null;
 
+// 声色「なし」= 音声を一切扱わない（AudioContext も生成しない．002 FR-013〜FR-015）
+const audioEnabled = () => settings.voice !== 'none';
+
 const announcer = new Announcer();
 const wakeLock = new WakeLockManager();
 
@@ -23,7 +26,7 @@ const wakeLock = new WakeLockManager();
 
 function createEngine() {
   engine = new TimerEngine(buildSchedule(settings), settings.remindBeforeSec, {
-    onAnnounce: (id) => announcer.play(id),
+    onAnnounce: (id) => { if (audioEnabled()) announcer.play(id); },
     onStatusChange,
   });
 }
@@ -51,6 +54,13 @@ function withTimeout(promise, ms, fallback) {
 }
 
 async function startActivity() {
+  if (!audioEnabled()) {
+    // 声色「なし」: 音声の有効化・読み込み・注意表示を一切行わない（FR-013, FR-015）
+    timerView.setNotice('audio', null);
+    engine.start(Date.now());
+    timerView.render();
+    return;
+  }
   const unlocked = await withTimeout(announcer.unlock(), 1500, false);
   if (unlocked && announcer.buffers.size === 0) {
     await withTimeout(announcer.preload(settings.voice), 3000, undefined);
@@ -75,7 +85,8 @@ async function applySettings(candidate) {
     const voiceChanged = settings.voice !== candidate.voice;
     settings = candidate;
     createEngine();
-    if (voiceChanged) {
+    // 「なし」→ 男女に戻した場合も含め，音声が有効なときだけ先読みする（FR-017）
+    if (voiceChanged && audioEnabled()) {
       await announcer.preload(settings.voice);
     }
   }
@@ -130,7 +141,7 @@ document.addEventListener('visibilitychange', () => {
 createEngine();
 timerView.render();
 announcer.loadManifest().then((ok) => {
-  if (ok) {
+  if (ok && audioEnabled()) {
     // AudioContext が suspended のままでもデコードは可能なため先読みし，
     // 開始操作の unlock() 後に即再生できるようにする
     announcer.preload(settings.voice);

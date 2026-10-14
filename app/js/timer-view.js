@@ -8,7 +8,7 @@ import { formatClock } from './format.js';
 const PHASE_TEXT = {
   presentation: '発表',
   designated: '指定討論',
-  audience: '聴衆討論',
+  audience: 'QAセッション', // 内部キー audience は維持（002 research R2）
   changeover: '入れ替え',
 };
 

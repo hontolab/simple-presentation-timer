@@ -12,10 +12,14 @@ const AUDIO_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..
 const MANIFEST_PATH = path.join(AUDIO_DIR, 'manifest.json');
 const skip = existsSync(MANIFEST_PATH) ? false : '音声アセット未生成（T021 未実施）';
 
-/** アプリが再生し得る全アナウンス ID */
+/** アプリが再生し得る全アナウンス ID（指定討論あり・なしの両進行表から収集．002） */
 function requiredIds() {
   const ids = new Set(['start']);
-  for (const seg of buildSchedule({ ...DEFAULT_SETTINGS, speakers: 2 })) ids.add(seg.endAnnouncement);
+  for (const designatedSec of [DEFAULT_SETTINGS.designatedSec, 0]) {
+    for (const seg of buildSchedule({ ...DEFAULT_SETTINGS, speakers: 2, designatedSec })) {
+      ids.add(seg.endAnnouncement);
+    }
+  }
   for (const sec of ALLOWED_VALUES.remindBeforeSec) ids.add(`remind_presentation_${sec}`);
   return [...ids];
 }
@@ -28,9 +32,9 @@ describe('audio/manifest.json', { skip }, () => {
     assert.deepEqual(Object.keys(manifest.voices).sort(), ['female', 'male']);
   });
 
-  test('アプリが使用する全 ID（9 件）が定義されている', () => {
+  test('アプリが使用する全 ID（10 件）が定義されている', () => {
     const ids = requiredIds();
-    assert.equal(ids.length, 9);
+    assert.equal(ids.length, 10);
     for (const id of ids) {
       assert.ok(manifest.announcements[id], `missing announcement: ${id}`);
       assert.ok(manifest.announcements[id].text, `missing text: ${id}`);

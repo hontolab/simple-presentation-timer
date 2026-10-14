@@ -19,15 +19,16 @@ export const DEFAULT_SETTINGS = Object.freeze({
 // 時間項目はプリセットの列挙値のみ許可する（カスタム入力なし）
 export const ALLOWED_VALUES = Object.freeze({
   presentationSec: Object.freeze([180, 300, 420, 600, 900]), // 3・5・7・10・15 分
-  designatedSec: Object.freeze([60, 120, 180, 300]),         // 1・2・3・5 分
+  designatedSec: Object.freeze([0, 60, 120, 180, 300]),      // 「なし」・1・2・3・5 分（0 =「なし」: 指定討論を省く，002 FR-003）
   audienceSec: Object.freeze([180, 300, 420, 600]),          // 3・5・7・10 分
   changeoverSec: Object.freeze([60, 120, 180]),              // 1・2・3 分（「なし」は設けない）
   remindBeforeSec: Object.freeze([30, 60, 180]),             // 30 秒・1 分・3 分
 });
 
-export const SPEAKERS_RULE = Object.freeze({ min: 1, max: 20 });
+export const SPEAKERS_RULE = Object.freeze({ min: 1, max: 7 }); // 002 FR-001: 7 名で十分
 
-const VOICES = ['male', 'female'];
+// 'none' = 音声を一切再生しない（進行役が口頭で合図する運用．002 FR-012）
+const VOICES = ['male', 'female', 'none'];
 
 /**
  * 設定を検証する．
@@ -61,7 +62,7 @@ export function validateSettings(settings) {
   }
 
   if (!VOICES.includes(settings.voice)) {
-    errors.voice = '声色は male または female を指定してください';
+    errors.voice = '声色は male・female・none のいずれかを指定してください';
   }
 
   // リマインドは発表フェーズのみが対象のため，比較相手は発表時間だけ
@@ -72,9 +73,25 @@ export function validateSettings(settings) {
   return { valid: Object.keys(errors).length === 0, errors, warnings };
 }
 
+/** 1 項目の値が許容範囲か（validateSettings と同じ原本で判定する） */
+function isFieldValid(field, value) {
+  if (field === 'speakers') {
+    return (
+      typeof value === 'number' &&
+      Number.isInteger(value) &&
+      value >= SPEAKERS_RULE.min &&
+      value <= SPEAKERS_RULE.max
+    );
+  }
+  if (field === 'voice') return VOICES.includes(value);
+  return ALLOWED_VALUES[field].includes(value);
+}
+
 /**
- * ストレージから設定を読み込む．不正・欠損・旧形式はデフォルト値へ
- * フォールバックする（FR-025, FR-026）．
+ * ストレージから設定を読み込む．
+ * 不正・欠損の項目は **その項目だけ** デフォルト値へ戻し，他の項目の保存値は
+ * 維持する（002 FR-002）．JSON 全体が壊れている場合は全項目デフォルト．
+ * 未知のキー（旧スキーマ等）は捨てる．
  * @param {{ getItem(k:string): string|null }} storage localStorage 互換
  */
 export function loadSettings(storage) {
@@ -82,9 +99,12 @@ export function loadSettings(storage) {
     const raw = storage.getItem(STORAGE_KEY);
     if (raw === null) return { ...DEFAULT_SETTINGS };
     const parsed = JSON.parse(raw);
-    const merged = { ...DEFAULT_SETTINGS, ...parsed };
-    const { valid } = validateSettings(merged);
-    return valid ? merged : { ...DEFAULT_SETTINGS };
+    if (parsed === null || typeof parsed !== 'object') return { ...DEFAULT_SETTINGS };
+    const result = {};
+    for (const [field, fallback] of Object.entries(DEFAULT_SETTINGS)) {
+      result[field] = isFieldValid(field, parsed[field]) ? parsed[field] : fallback;
+    }
+    return result;
   } catch {
     return { ...DEFAULT_SETTINGS };
   }

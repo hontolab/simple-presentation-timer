@@ -7,7 +7,7 @@
   --muted: #8a8a8a;
   --accent-presentation: #2563eb; /* 発表 */
   --accent-designated: #059669;   /* 指定討論 */
-  --accent-audience: #0891b2;     /* 聴衆討論 */
+  --accent-audience: #0891b2;     /* QAセッション */
   --accent-changeover: #d97706;   /* 入れ替え */
   --accent-done: #7c3aed;
   --danger: #dc2626;
@@ -252,6 +252,8 @@ body[data-phase="completed"] .phase-label    { color: var(--accent-done); }
 }
 .settings-messages .error { color: var(--danger); }
 .settings-messages .warning { color: var(--accent-changeover); }
+/* 設定項目の補足（声色「なし」時のリマインド注記．002 FR-016）: 警告と同じ色・サイズ */
+.field-note { margin: 0.25rem 0 0; font-size: 0.9rem; color: var(--accent-changeover); }
 
 /* 確認ダイアログ */
 .confirm-overlay {

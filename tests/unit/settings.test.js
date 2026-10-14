@@ -39,11 +39,11 @@ describe('スキーマ定義（contracts/settings-schema.md）', () => {
 
   test('プリセット値は Clarifications Q1 のとおり', () => {
     assert.deepEqual([...ALLOWED_VALUES.presentationSec], [180, 300, 420, 600, 900]);
-    assert.deepEqual([...ALLOWED_VALUES.designatedSec], [60, 120, 180, 300]);
+    assert.deepEqual([...ALLOWED_VALUES.designatedSec], [0, 60, 120, 180, 300]); // 002: 先頭に「なし」
     assert.deepEqual([...ALLOWED_VALUES.audienceSec], [180, 300, 420, 600]);
     assert.deepEqual([...ALLOWED_VALUES.changeoverSec], [60, 120, 180]);
     assert.deepEqual([...ALLOWED_VALUES.remindBeforeSec], [30, 60, 180]);
-    assert.deepEqual(SPEAKERS_RULE, { min: 1, max: 20 });
+    assert.deepEqual(SPEAKERS_RULE, { min: 1, max: 7 }); // 002 FR-001
   });
 });
 
@@ -64,9 +64,9 @@ describe('validateSettings', () => {
     }
   });
 
-  test('発表者数は 1 と 20 が有効（境界値）', () => {
+  test('発表者数は 1 と 7 が有効（境界値，002 FR-001）', () => {
     assert.equal(validateSettings({ ...DEFAULT_SETTINGS, speakers: 1 }).valid, true);
-    assert.equal(validateSettings({ ...DEFAULT_SETTINGS, speakers: 20 }).valid, true);
+    assert.equal(validateSettings({ ...DEFAULT_SETTINGS, speakers: 7 }).valid, true);
   });
 
   test('列挙値にない時間・型違反は拒否（FR-027）', () => {
@@ -92,10 +92,10 @@ describe('validateSettings', () => {
   });
 
   test('発表者数の範囲外・非整数・型違反は拒否', () => {
-    for (const speakers of [0, 21, 2.5, '4', -1, NaN]) {
+    for (const speakers of [0, 8, 20, 2.5, '4', -1, NaN]) {
       const r = validateSettings({ ...DEFAULT_SETTINGS, speakers });
       assert.equal(r.valid, false, String(speakers));
-      assert.match(r.errors.speakers, /1〜20 の整数/);
+      assert.match(r.errors.speakers, /1〜7 の整数/);
     }
   });
 
@@ -188,5 +188,108 @@ describe('loadSettings / saveSettings（フォールバックと保存可否，U
     assert.equal(r.valid, false);
     assert.ok(r.errors.voice);
     assert.equal(storage.map.has(STORAGE_KEY), false);
+  });
+});
+
+describe('loadSettings の項目単位フォールバック（002 FR-002, research R4）', () => {
+  // デフォルトと異なる有効値．どの項目が保持されたかを判別できるようにする
+  const customValid = {
+    presentationSec: 180,
+    designatedSec: 60,
+    audienceSec: 180,
+    changeoverSec: 60,
+    remindBeforeSec: 30,
+    voice: 'male',
+  };
+
+  test('発表者数のみ範囲外 → 発表者数だけデフォルトに戻り他項目は保持', () => {
+    const storage = makeStorage({
+      [STORAGE_KEY]: JSON.stringify({ ...customValid, speakers: SPEAKERS_RULE.max + 1 }),
+    });
+    assert.deepEqual(loadSettings(storage), { ...customValid, speakers: DEFAULT_SETTINGS.speakers });
+  });
+
+  test('声色のみ不正 → 声色だけデフォルト（女性）に戻り他項目は保持', () => {
+    const storage = makeStorage({
+      [STORAGE_KEY]: JSON.stringify({ ...customValid, speakers: 3, voice: 'robot' }),
+    });
+    assert.deepEqual(loadSettings(storage), { ...customValid, speakers: 3, voice: DEFAULT_SETTINGS.voice });
+  });
+
+  test('複数項目が不正 → それぞれ個別にデフォルトへ戻す', () => {
+    const storage = makeStorage({
+      [STORAGE_KEY]: JSON.stringify({
+        ...customValid, speakers: 0, presentationSec: 240, voice: 'robot',
+      }),
+    });
+    assert.deepEqual(loadSettings(storage), {
+      ...customValid,
+      speakers: DEFAULT_SETTINGS.speakers,
+      presentationSec: DEFAULT_SETTINGS.presentationSec,
+      voice: DEFAULT_SETTINGS.voice,
+    });
+  });
+
+  test('JSON 破損・キーなしは全項目デフォルト（既存挙動）', () => {
+    assert.deepEqual(loadSettings(makeStorage({ [STORAGE_KEY]: '{broken' })), DEFAULT_SETTINGS);
+    assert.deepEqual(loadSettings(makeStorage()), DEFAULT_SETTINGS);
+  });
+
+  test('復元結果に未知のキーは含まれず，validateSettings で常に有効', () => {
+    const storage = makeStorage({
+      [STORAGE_KEY]: JSON.stringify({ ...customValid, speakers: 99, qaSec: 300, rounds: 3 }),
+    });
+    const loaded = loadSettings(storage);
+    assert.deepEqual(Object.keys(loaded).sort(), Object.keys(DEFAULT_SETTINGS).sort());
+    assert.equal(validateSettings(loaded).valid, true);
+  });
+});
+
+describe('指定討論時間の「なし」（002 US1, FR-003）', () => {
+  test('designatedSec = 0 は有効で，許可値の先頭に置かれる', () => {
+    assert.equal(ALLOWED_VALUES.designatedSec[0], 0);
+    assert.equal(validateSettings({ ...DEFAULT_SETTINGS, designatedSec: 0 }).valid, true);
+  });
+
+  test('列挙外（30 秒）は引き続き拒否，デフォルトは 3 分のまま', () => {
+    assert.equal(validateSettings({ ...DEFAULT_SETTINGS, designatedSec: 30 }).valid, false);
+    assert.equal(DEFAULT_SETTINGS.designatedSec, 180);
+  });
+});
+
+describe('声色「なし」（002 US3, FR-012）', () => {
+  test('none・male・female は有効，デフォルトは female のまま', () => {
+    for (const voice of ['none', 'male', 'female']) {
+      assert.equal(validateSettings({ ...DEFAULT_SETTINGS, voice }).valid, true, voice);
+    }
+    assert.equal(DEFAULT_SETTINGS.voice, 'female');
+  });
+
+  test('未知の声色は拒否され，メッセージに none が含まれる', () => {
+    const r = validateSettings({ ...DEFAULT_SETTINGS, voice: 'robot' });
+    assert.equal(r.valid, false);
+    assert.match(r.errors.voice, /none/);
+  });
+
+  test('none は保存・復元できる', () => {
+    const storage = makeStorage();
+    const custom = { ...DEFAULT_SETTINGS, voice: 'none' };
+    assert.equal(saveSettings(storage, custom).valid, true);
+    assert.deepEqual(loadSettings(storage), custom);
+  });
+});
+
+describe('発表者数 1〜7（002 US4, FR-001/FR-002）', () => {
+  test('旧版の保存値 speakers: 12 は 4 名に戻り，他の項目は保持される', () => {
+    const storage = makeStorage({
+      [STORAGE_KEY]: JSON.stringify({
+        speakers: 12, presentationSec: 180, designatedSec: 60, audienceSec: 180,
+        changeoverSec: 60, remindBeforeSec: 30, voice: 'male',
+      }),
+    });
+    assert.deepEqual(loadSettings(storage), {
+      speakers: 4, presentationSec: 180, designatedSec: 60, audienceSec: 180,
+      changeoverSec: 60, remindBeforeSec: 30, voice: 'male',
+    });
   });
 });
