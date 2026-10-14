@@ -1,0 +1,38 @@
+# ---- シークレット（コミット禁止：Constitution 原則 VI） ----
+.env
+.env.*
+!.env.example
+
+# ---- プロジェクト固有 ----
+private/
+
+# ---- 開発用資産（public リポジトリには含めない） ----
+.claude/
+.specify/
+specs/
+
+# ---- OS ----
+.DS_Store
+._*
+Thumbs.db
+
+# ---- エディタ ----
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ---- Node.js ----
+node_modules/
+*.log
+
+# ---- Python（音声生成ツール） ----
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/

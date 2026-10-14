@@ -1,0 +1,10 @@
+{
+  "name": "simple-presentation-timer",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "研究室進捗報告会用進行管理タイマー",
+  "scripts": {
+    "test": "node --test tests/unit/*.test.js"
+  }
+}

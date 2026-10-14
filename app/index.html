@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>シンプルプレゼンテーションタイマー</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-phase="idle">
+  <!-- タイマー画面 -->
+  <main id="timer-view" class="view">
+    <header class="top-bar">
+      <div id="speaker-indicator" class="speaker-indicator">発表者 1 / 4</div>
+      <button id="settings-button" class="icon-button" type="button" aria-label="設定">⚙</button>
+    </header>
+    <section class="timer-center">
+      <div id="phase-label" class="phase-label">待機中</div>
+      <div id="time-display" class="time-display">5:00</div>
+      <div id="phase-note" class="phase-note"></div>
+    </section>
+    <div class="bottom-area">
+      <div id="notices" class="notices" hidden></div>
+      <footer class="controls">
+        <button id="start-button" class="control-button primary" type="button">開始</button>
+        <button id="pause-button" class="control-button" type="button" hidden>一時停止</button>
+        <button id="resume-button" class="control-button primary" type="button" hidden>再開</button>
+        <button id="skip-button" class="control-button" type="button" hidden>スキップして次へ</button>
+        <button id="reset-button" class="control-button danger" type="button" hidden>リセット</button>
+      </footer>
+    </div>
+  </main>
+
+  <!-- 設定画面 -->
+  <main id="settings-view" class="view" hidden>
+    <header class="top-bar">
+      <h1 class="settings-title">設定</h1>
+      <button id="settings-close" class="icon-button" type="button" aria-label="閉じる">✕</button>
+    </header>
+    <form id="settings-form" class="settings-form">
+      <label class="field">
+        <span>発表者数</span>
+        <select id="input-speakers"></select>
+      </label>
+      <div class="field">
+        <span>発表時間</span>
+        <div class="preset-group" id="preset-presentation"></div>
+      </div>
+      <div class="field">
+        <span>指定討論時間</span>
+        <div class="preset-group" id="preset-designated"></div>
+      </div>
+      <div class="field">
+        <span>聴衆討論時間</span>
+        <div class="preset-group" id="preset-audience"></div>
+      </div>
+      <div class="field">
+        <span>入れ替え時間</span>
+        <div class="preset-group" id="preset-changeover"></div>
+      </div>
+      <div class="field">
+        <span>リマインド（発表の残り時間）</span>
+        <div class="preset-group" id="preset-remind"></div>
+      </div>
+      <fieldset class="field voice-field">
+        <legend>アナウンスの声</legend>
+        <label><input type="radio" name="voice" value="female"> 女性</label>
+        <label><input type="radio" name="voice" value="male"> 男性</label>
+      </fieldset>
+      <div id="settings-messages" class="settings-messages" hidden></div>
+      <button id="settings-save" class="control-button primary" type="submit">保存する</button>
+    </form>
+  </main>
+
+  <!-- リセット確認ダイアログ -->
+  <div id="confirm-overlay" class="confirm-overlay" hidden>
+    <div class="confirm-dialog" role="alertdialog" aria-labelledby="confirm-text">
+      <p id="confirm-text">タイマーをリセットして最初に戻しますか？</p>
+      <div class="confirm-actions">
+        <button id="confirm-cancel" class="control-button" type="button">キャンセル</button>
+        <button id="confirm-ok" class="control-button danger" type="button">リセットする</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
